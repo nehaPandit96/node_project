@@ -1,0 +1,8 @@
+node_modules
+dist
+.angular
+.DS_Store
+.idea
+package-lock.json
+public
+.vscode
