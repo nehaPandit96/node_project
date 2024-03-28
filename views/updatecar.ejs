@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Update Car</title>
+    <style>
+      /* Navbar container */
+      .navbar {
+        overflow: hidden;
+        background-color: #333; /* Dark background color */
+      }
+
+      /* Links inside the navbar */
+      .navbar a {
+        float: left;
+        display: block;
+        color: #f2f2f2; /* White text color */
+        text-align: center;
+        padding: 14px 20px; /* Padding for each link */
+        text-decoration: none;
+      }
+
+      /* Change background color of links on hover */
+      .navbar a:hover {
+        background-color: #ddd; /* Light grey background color */
+        color: black; /* Black text color */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="navbar">
+      <a href="/">Home</a>
+      <a href="#login">Login</a>
+      <a href="#register">Register</a>
+      <a href="/add">Add a New car</a>
+    </div>
+    <h1>Update Car</h1>
+    <form action="/update/<%= car._id %>" method="POST">
+      <label for="manufacturer">Manufacturer:</label>
+      <input
+        type="text"
+        id="manufacturer"
+        name="manufacturer"
+        value="<%= car.manufacturer %>"
+        required
+      /><br /><br />
+
+      <label for="price">Price:</label>
+      <input
+        type="number"
+        id="price"
+        name="price"
+        value="<%= car.price %>"
+        required
+      /><br /><br />
+
+      <label for="model">Model:</label>
+      <input
+        type="text"
+        id="model"
+        name="model"
+        value="<%= car.model %>"
+        required
+      /><br /><br />
+
+      <label for="year">Year:</label>
+      <input
+        type="number"
+        id="year"
+        name="year"
+        value="<%= car.year %>"
+        required
+      /><br /><br />
+
+      <label for="color">Color:</label>
+      <input
+        type="text"
+        id="color"
+        name="color"
+        value="<%= car.color %>"
+        required
+      /><br /><br />
+
+      <label for="vin">VIN (Vehicle Identification Number):</label>
+      <input
+        type="number"
+        id="vin"
+        name="vin"
+        value="<%= car.vin %>"
+        required
+      /><br /><br />
+
+      <label for="engineType">Engine Type:</label>
+      <input
+        type="text"
+        id="engineType"
+        name="engineType"
+        value="<%= car.engineType %>"
+        required
+      /><br /><br />
+
+      <label for="mileage">Mileage</label>
+      <input
+        type="number"
+        id="mileage"
+        name="mileage"
+        value="<%= car.mileage %>"
+        required
+      /><br /><br />
+
+      <label for="fuelType">Fuel Type:</label>
+      <input
+        type="text"
+        id="fuelType"
+        name="fuelType"
+        value="<%= car.fuelType %>"
+        required
+      /><br /><br />
+
+      <label for="transmissionType">Transmission Type:</label>
+      <input
+        type="text"
+        id="transmissionType"
+        name="transmissionType"
+        value="<%= car.transmissionType %>"
+        required
+      /><br /><br />
+
+      <label for="images">Images (comma-separated URLs):</label>
+      <input
+        type="text"
+        id="images"
+        name="images"
+        value="<%= car.images.join(', ') %>"
+        required
+      /><br /><br />
+
+      <button type="submit">Update Car</button>
+    </form>
+  </body>
+</html>
