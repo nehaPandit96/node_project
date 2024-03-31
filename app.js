@@ -7,6 +7,26 @@ const nodemailer = require("nodemailer");
 const session = require("express-session"); // Express session for session management
 const cookieParser = require("cookie-parser"); // Cookie parser for parsing cookies
 const helmet = require("helmet"); // Helmet for HTTP header security
+const winston = require("winston");
+
+// Define the logger configuration
+const logger = winston.createLogger({
+  level: "info",
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.File({ filename: "error.log", level: "error" }), // Log errors to error.log file
+    new winston.transports.File({ filename: "combined.log" }), // Log all other levels to combined.log file
+  ],
+});
+
+// log to the console as well
+if (process.env.NODE_ENV !== "production") {
+  logger.add(
+    new winston.transports.Console({
+      format: winston.format.simple(),
+    })
+  );
+}
 
 // Initialize express app
 const app = express();
@@ -20,8 +40,8 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.error("Error connecting to MongoDB:", err));
+  .then(() => logger.info("Connected to MongoDB"))
+  .catch((err) => logger.error("Error connecting to MongoDB:", err));
 
 // Middleware for parsing JSON data
 app.use(bodyParser.json());
@@ -100,8 +120,8 @@ app.get("/", async (req, res) => {
 // Route to render the form for adding a new car
 app.get("/add", (req, res) => {
   const user = req.session.user;
-  console.log("add route", req.session.user);
-  if (user.role === "admin") {
+
+  if (user && user.role === "admin") {
     res.render("add", { user: req.session.user });
   } else {
     res.status(403).send("Unauthorized!");
@@ -142,10 +162,11 @@ app.post("/add", async (req, res) => {
   newCar
     .save()
     .then(() => {
+      logger.info("New car added");
       res.redirect("/");
     })
     .catch((err) => {
-      console.log("Error:", err);
+      logger.error("Error:", err);
       res.status(500).send("Error adding new car");
     });
 });
@@ -161,7 +182,7 @@ app.get("/cardetails/:id", async (req, res) => {
     }
     res.render("carDetails", { car, user: req.session.user });
   } catch (err) {
-    console.error("Error fetching car details:", err);
+    logger.error("Error:", err);
     res.status(500).send("Error fetching car details");
   }
 });
@@ -173,7 +194,7 @@ app.get("/update/:id", async (req, res) => {
     const car = await Car.findById(req.params.id);
     res.render("updatecar", { car, user: req.session.user });
   } catch (err) {
-    console.error("Error fetching car details for update:", err);
+    logger.error("Error:", err);
     res.status(500).send("Error fetching car details for update");
   }
 });
@@ -181,14 +202,13 @@ app.get("/update/:id", async (req, res) => {
 // Route to handle form submission and update the car details in the database
 app.post("/update/:id", async (req, res) => {
   const user = req.session.user;
-  console.log("add route", req.session.user);
   if (user.role === "admin" || user.role === "salesperson") {
     try {
       // Find the car by ID and update its details
       await Car.findByIdAndUpdate(req.params.id, req.body);
       res.redirect(`/cardetails/${req.params.id}`);
     } catch (err) {
-      console.error("Error updating car details:", err);
+      logger.error("Error:", err);
       res.status(500).send("Error updating car details");
     }
   } else {
@@ -264,7 +284,7 @@ app.post("/register", async (req, res) => {
 
     res.send("Registration successful! Check your email for confirmation.");
   } catch (err) {
-    console.error("Error registering user:", err);
+    logger.error("Error:", err);
     res.status(500).send("Error registering user");
   }
 });
@@ -287,12 +307,12 @@ app.post("/login", async (req, res) => {
       return;
     }
     req.session.user = user;
-
+    // Log the user login event
+    logger.info(`User ${req.body.email} logged in`);
     // Redirect to index page upon successful login
     res.redirect("/");
-    console.log("in login", req.session.user);
   } catch (err) {
-    console.error("Error logging in:", err);
+    logger.error("Error:", err);
     res.status(500).send("Error logging in");
   }
 });
@@ -302,7 +322,7 @@ app.get("/logout", (req, res) => {
   // Destroy the session
   req.session.destroy((err) => {
     if (err) {
-      console.error("Error destroying session:", err);
+      logger.error("Error:", err);
       res.status(500).send("Error logging out");
     } else {
       // Redirect the user to the login page after logout
@@ -320,7 +340,7 @@ app.post("/markPendingSale/:id", async (req, res) => {
       await Car.findByIdAndUpdate(req.params.id, { status: "pending sale" });
       res.redirect(`/cardetails/${req.params.id}`);
     } catch (err) {
-      console.error("Error marking car as pending sale:", err);
+      logger.error("Error:", err);
       res.status(500).send("Error marking car as pending sale");
     }
   } else {
@@ -328,6 +348,34 @@ app.post("/markPendingSale/:id", async (req, res) => {
   }
 });
 
+// Route to render the form for adding a new car
+app.get("/search", (req, res) => {
+  res.render("searchResults", { cars: [], user: req.session.user });
+});
+
+// Route to handle search functionality
+app.post("/search", async (req, res) => {
+  try {
+    // Extract search parameters from the request body
+    const { make, model, minYear, maxYear, minPrice, maxPrice } = req.body;
+
+    // Construct query object based on search parameters
+    const query = {};
+    if (make) query.manufacturer = make;
+    if (model) query.model = model;
+    if (minYear && maxYear)
+      query.year = { $gte: parseInt(minYear), $lte: parseInt(maxYear) };
+    if (minPrice && maxPrice)
+      query.price = { $gte: parseInt(minPrice), $lte: parseInt(maxPrice) };
+
+    // Fetch cars from the database based on the constructed query
+    const cars = await Car.find(query);
+    res.render("searchResults", { cars, user: req.session.user }); // Pass cars to the template
+  } catch (err) {
+    logger.error("Error:", err);
+    res.status(500).send("Error searching cars");
+  }
+});
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
