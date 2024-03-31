@@ -31,9 +31,14 @@
   <body>
     <div class="navbar">
       <a href="/">Home</a>
-      <a href="#login">Login</a>
-      <a href="#register">Register</a>
       <a href="/add">Add a New car</a>
+
+      <% if (user) { %>
+      <a href="/logout">Logout</a>
+      <% } else { %>
+      <a href="/login">Login</a>
+      <a href="/register">Register</a>
+      <% } %>
     </div>
     <h1>Car Details</h1>
     <ul>
@@ -50,6 +55,8 @@
       <li>Mileage: <%= car.mileage %></li>
       <li>Fuel Type: <%= car.fuelType %></li>
       <li>Transmission Type: <%= car.transmissionType %></li>
+
+      <li>Status: <%= car.status %></li>
       <li>Images:</li>
       <div>
         <% car.images.forEach(image => { %>
@@ -64,6 +71,14 @@
         <% }); %>
       </div>
     </ul>
+    <% if (user && user.role !== 'user') { %>
     <a href="/update/<%= car._id %>">Update</a>
+    <% } %>
+    <!-- mark sale as pending -->
+    <% if (user && user.role !== 'user') { %>
+    <form action="/markPendingSale/<%= car._id %>" method="POST">
+      <button type="submit" class="deletebtn">Mark as pending sale</button>
+    </form>
+    <% } %>
   </body>
 </html>

@@ -31,9 +31,14 @@
   <body>
     <div class="navbar">
       <a href="/">Home</a>
-      <a href="#login">Login</a>
-      <a href="#register">Register</a>
       <a href="/add">Add a New car</a>
+
+      <% if (user) { %>
+      <a href="/logout">Logout</a>
+      <% } else { %>
+      <a href="/login">Login</a>
+      <a href="/register">Register</a>
+      <% } %>
     </div>
     <h1>Add Car</h1>
     <form action="/add" method="POST">
